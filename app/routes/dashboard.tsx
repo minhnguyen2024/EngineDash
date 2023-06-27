@@ -10,32 +10,49 @@ type State = {
 };
 
 export async function loader({ request }: LoaderArgs) {
-  const inventoryByStateList = await db.state.findMany({
-    orderBy: { inventoryLevel: "desc" },
+  const allEnginesList = await db.engine.findMany({
+    include:{
+      state: true
+    }
   });
-  return json(inventoryByStateList);
+  const listByState = await db.state.findMany({
+    include: {
+      engines: true,
+    },
+  });
+  return json(allEnginesList);
 }
 export default function Dashboard() {
   const inventoryByStateList = useLoaderData<typeof loader>();
-  console.log(inventoryByStateList);
+  // console.log(inventoryByStateList);
+  // inventoryByStateList.map(state =>{
+  //   console.log(state.name)
+  //   console.log(state.engines)
+  //   console.log("--------------------")
+  // })
   return (
     <div>
       <p>Dashboard</p>
       <table>
         <thead>
           <tr>
+            <th>Engine Name</th>
+            <th>Displacement</th>
+            <th>Application</th>
+            <th>Power</th>
             <th>State</th>
-            <th>Engine Type</th>
-            <th>Inventory Level</th>
           </tr>
         </thead>
         <tbody>
-          {inventoryByStateList.map((state: any) => {
+          
+          {inventoryByStateList.map((engine: any) => {
             return (
-              <tr key={state.id}>
-                <td>{state.name}</td>
-                <td>{state.engineType}</td>
-                <td>{state.inventoryLevel}</td>
+              <tr key={engine.id}>
+                <td>{engine.name}</td>
+                <td>{engine.displacement}</td>
+                <td>{engine.application}</td>
+                <td>{engine.power}</td>
+                <td>{engine.state.name}</td>
               </tr>
             );
           })}
@@ -44,3 +61,13 @@ export default function Dashboard() {
     </div>
   );
 }
+
+// {inventoryByStateList.map((state: any) => {
+//   return (
+//     <tr key={state.engines.id}>
+//       <td>{state.engines.name}</td>
+//       <td>{state.engines.displacement}</td>
+//       <td>{state.engines.application}</td>
+//       <td>{state.engines.power}</td>
+//     </tr>
+//   );

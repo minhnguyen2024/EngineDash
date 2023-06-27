@@ -10,9 +10,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model State {
-  id  String  @id @default(uuid())
-  name String 
-  engineType String
-  inventoryLevel Int
+model Engine {
+  id String @id @default(uuid())
+  name String
+  displacement Float
+  application String
+  power Int
+  stateId Int
+  state State @relation(fields: [stateId], references: [id])
 }
+
+model State {
+  id  Int  @id @default(autoincrement())
+  name String @unique
+  engines Engine[]
+}
+
+
