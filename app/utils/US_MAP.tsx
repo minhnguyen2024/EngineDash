@@ -1,4 +1,4 @@
-const US_MAP = [
+export const US_MAP = [
     [0,3,0,0,0,4,0,0,0,4],
     [3,0,0,7,5,0,4,0,0,0],
     [0,0,0,0,0,5,0,0,0,0],
@@ -11,5 +11,5 @@ const US_MAP = [
     [4,0,0,0,0,0,0,0,0,0],
 ]
 
-const US_AVAILABLE_STATE = ['IL', 'IN',' KS',' KY', 'MI', 'MO', 'OH', 'PA', 'TN', 'WI']
+
 

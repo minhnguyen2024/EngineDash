@@ -1,3 +1,4 @@
+import { US_AVAILABLE_STATE } from "~/utils/helper-data";
 import { PrismaClient } from "@prisma/client";
 const db = new PrismaClient();
 
@@ -12,17 +13,15 @@ async function seed() {
     })
   );
 }
-seed();
-function seedStates() {
-  return [
-    {
-      name: "PA",
-    },
-    {
-      name: "MI",
-    },
-  ];
+// seed();
+async function seedStates() {
+  for (let i = 0; i < US_AVAILABLE_STATE.length; i++){
+    await db.state.create({
+      data: { name: US_AVAILABLE_STATE[i] },
+    });
+  }
 }
+seedStates()
 
 function seedEnigines() {
   return [

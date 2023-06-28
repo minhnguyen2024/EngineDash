@@ -51,3 +51,9 @@ export const US_STATES = [
     "WI",
     "WY",
   ];
+
+  export const APPLICATIONS = [
+    "Agriculture", "Mining", "Marine", "Rail"
+  ]
+
+  export const US_AVAILABLE_STATE = ['IL', 'IN',' KS',' KY', 'MI', 'MO', 'OH', 'PA', 'TN', 'WI']

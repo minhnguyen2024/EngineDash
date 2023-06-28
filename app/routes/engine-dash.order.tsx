@@ -1,6 +1,6 @@
 //SELECT * FROM db where (power <= {powerLowerBound} AND power >= {powerUpperBound})
 // AND application = {application} and quantity >= {quantity}
-import { US_STATES } from "~/utils/US_STATES";
+import { US_STATES } from "~/utils/helper-data";
 import { useLoaderData } from "@remix-run/react";
 import { db } from "~/utils/db.server";
 
@@ -19,9 +19,17 @@ export async function loader() {
 export default function Order() {
   const availableInventory = useLoaderData<typeof loader>();
   const displacementList = Array<number>();
+  const powerList = Array<number>();
+  const applicationList = Array<string>();
   for (let i = 0; i < availableInventory.length; i++) {
-    if (!displacementList.includes(availableInventory[i].displacement)) {
+    if (
+      !displacementList.includes(availableInventory[i].displacement) &&
+      !powerList.includes(availableInventory[i].power) &&
+      !applicationList.includes(availableInventory[i].application)
+    ) {
       displacementList.push(availableInventory[i].displacement);
+      powerList.push(availableInventory[i].power);
+      applicationList.push(availableInventory[i].application);
     }
   }
   return (
@@ -47,22 +55,24 @@ export default function Order() {
               <li>
                 <label>
                   Power
-                  <select name="select-engine-type" id="select-engine-type">
-                    <option value="power">2 Liters</option>
+                  <select name="power" id="power">
+                    {powerList.map((power) => (
+                      <option key={power} value={power}>
+                        {power} Liters
+                      </option>
+                    ))}
                   </select>
                 </label>
               </li>
               <li>
                 <label>
                   Applications
-                  <select
-                    name="select-engine-application"
-                    id="select-engine-application"
-                  >
-                    <option value="agriculture">Agriculture</option>
-                    <option value="construction">Construction</option>
-                    <option value="mining">Mining</option>
-                    <option value="marine">Marine</option>
+                  <select name="application" id="application">
+                    {applicationList.map((app) => (
+                      <option key={app} value={app}>
+                        {app}
+                      </option>
+                    ))}
                   </select>
                 </label>
               </li>
@@ -79,7 +89,7 @@ export default function Order() {
             </ul>
           </li>
           <label>
-            Quantity <input type="text"></input>
+            Quantity <input type="text" name="quantity" id="quantity"></input>
           </label>
         </ul>
       </form>

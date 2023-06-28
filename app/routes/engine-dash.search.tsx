@@ -1,14 +1,14 @@
 import { useLoaderData } from "@remix-run/react";
-import { US_STATES } from "~/utils/US_STATES";
+import { US_STATES } from "~/utils/helper-data";
 import { db } from "~/utils/db.server";
 export async function loader() {
   const availableInventory = await db.engine.findMany({
-    select: { 
-        displacement: true,
-        power: true,
-        application: true,
-        state: true,
-     },
+    select: {
+      displacement: true,
+      power: true,
+      application: true,
+      state: true,
+    },
   });
   return availableInventory;
 }
