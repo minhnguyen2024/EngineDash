@@ -1,11 +1,7 @@
 //Manage inventory: add/delete and engine
-import { US_AVAILABLE_STATE } from "~/utils/helper-data";
-import { APPLICATIONS } from "~/utils/helper-data";
-import { useLoaderData } from "@remix-run/react";
+import { US_AVAILABLE_STATE, APPLICATIONS } from "~/utils/helper-data";
 import { db } from "~/utils/db.server";
 import { type ActionArgs, redirect } from "@remix-run/node";
-
-import { Form } from "@remix-run/react";
 
 export async function action({ request }: ActionArgs) {
   const newInventoryForm = await request.formData();
@@ -15,7 +11,7 @@ export async function action({ request }: ActionArgs) {
   const application = newInventoryForm.get("application");
   const displacement = newInventoryForm.get("displacement");
   const power = newInventoryForm.get("power");
-  //TODO: validate above data
+
   if (
     typeof name !== "string" ||
     typeof application !== "string" ||
@@ -24,8 +20,13 @@ export async function action({ request }: ActionArgs) {
     typeof state !== "string" ||
     typeof quantity !== "string"
   ) {
+    if (name === "" || application === "" || displacement === "" || power === "" || state === "" || quantity === ""){
+      throw new Error("Please enter all data fields")
+    }
     throw new Error("Form not submitted correctly");
   }
+
+  
   const stateObjFromQuery = await db.state.findUnique({
     where: {
       name: state,
@@ -49,68 +50,77 @@ export async function action({ request }: ActionArgs) {
 }
 export default function ManageInventory() {
   return (
-    <div className="flex justify-center items-center">
-      <div>
-      <h1 className="text-3xl underline font-bold p-6">
-        Add New Inventory Record
-      </h1>
+    <div className="flex flex-col justify-center items-center">
+      <div className="inline-block">
+        <h1 className="text-3xl underline font-bold p-6">
+          Add New Inventory Record
+        </h1>
       </div>
-      <div>
-
-      <form method="post" className="rounded-md border-2 border-black w-96 ml-6">
-        <div className="inline-block ml-8">
-          <label>State: </label>
-          <select name="state" id="state" className="flex-1 rounded-md border-2 border-black leading-loose">
-            {US_AVAILABLE_STATE.map((state) => (
-              <option key={state} value={state}>
-                {state}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="inline-block ml-8">
-          <label>Quantity</label>
-          <input
-            type="text"
-            name="quantity"
-            id="quantity"
-            className="flex-1 rounded-md border-2 border-black w-8"
-          ></input>
-        </div>
-        <ul>
-          <li>
-            <label>
-              Name:
-              <input type="text" name="name" id="name" /> Liters
-            </label>
-          </li>
-          <li>
-            <label>
-              Displacement:
-              <input type="text" name="displacement" id="displacement" /> Liters
-            </label>
-          </li>
-          <li>
-            <label>
-              Application:
-              <select name="application" id="application">
-                {APPLICATIONS.map((app) => (
-                  <option key={app} value={app}>
-                    {app}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </li>
-          <li>
-            <label>
-              Power:
-              <input type="text" name="power" id="power" /> HP
-            </label>
-          </li>
-        </ul>
-        <button type="submit">Add new Inventory</button>
-      </form>
+      <div className="inline-block">
+        <form
+          method="post"
+          className="rounded-md border-2 border-black w-96 ml-6"
+        >
+          <div className="inline-block ml-8">
+            <label>State: </label>
+            <select
+              name="state"
+              id="state"
+              className="flex-1 rounded-md border-2 border-black leading-loose"
+            >
+              {US_AVAILABLE_STATE.map((state) => (
+                <option key={state} value={state}>
+                  {state}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="inline-block ml-8">
+            <label>Quantity</label>
+            <input
+              type="text"
+              name="quantity"
+              id="quantity"
+              className="flex-1 rounded-md border-2 border-black w-8"
+            ></input>
+          </div>
+          <ul className="p-8">
+            <li className="p-4">
+              <label>
+                Name:
+              </label>
+                <input type="text" name="name" id="name" className="rounded-md border-2 border-black"/>
+            </li>
+            <li className="p-4">
+              <label>
+                Displacement:
+                <input type="text" name="displacement" id="displacement" className="rounded-md border-2 border-black"/>{" "}
+                Liters
+              </label>
+            </li>
+            <li className="p-4">
+              <label>
+                Application:
+                <select name="application" id="application" className="rounded-md border-2 border-black">
+                  {APPLICATIONS.map((app) => (
+                    <option key={app} value={app}>
+                      {app}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </li>
+            <li className="p-4">
+              <label>
+                Power:
+                <input type="text" name="power" id="power" className="rounded-md border-2 border-black"/> HP
+              </label>
+            </li>
+          </ul>
+          <div className="justify-center items-center">
+            <button type="submit" className="rounded-md border-2 border-black">Add new Inventory</button>
+          </div>
+        </form>
       </div>
     </div>
   );

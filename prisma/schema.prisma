@@ -17,7 +17,7 @@ model Engine {
   application String
   power Int
   stateId Int
-  state State @relation(fields: [stateId], references: [id])
+  state State @relation(fields: [stateId], references: [id], onDelete: Cascade)
 }
 
 model State {

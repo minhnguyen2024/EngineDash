@@ -2,23 +2,12 @@ import { db } from "~/utils/db.server";
 import { type LoaderArgs, json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 
-type State = {
-  id: string;
-  name: string;
-  engineType: string;
-  inventoryLevel: string;
-};
 
 export async function loader({ request }: LoaderArgs) {
   const allEnginesList = await db.engine.findMany({
     include:{
       state: true
     }
-  });
-  const listByState = await db.state.findMany({
-    include: {
-      engines: true,
-    },
   });
   return json(allEnginesList);
 }
