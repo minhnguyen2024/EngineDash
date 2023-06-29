@@ -24,23 +24,18 @@ export async function loader({ request }: LoaderArgs) {
 }
 export default function Dashboard() {
   const inventoryByStateList = useLoaderData<typeof loader>();
-  // console.log(inventoryByStateList);
-  // inventoryByStateList.map(state =>{
-  //   console.log(state.name)
-  //   console.log(state.engines)
-  //   console.log("--------------------")
-  // })
+
   return (
-    <div>
-      <p>Dashboard</p>
-      <table>
-        <thead>
+    <div className="">
+      <h1 className="text-3xl underline font-bold p-6">Dashboard</h1>
+      <table className="mb-4 w-full border-b-2 border-b-gray-200 text-left p-6">
+        <thead className="bg-gray-200 font-semibold">
           <tr>
-            <th>Engine Name</th>
-            <th>Displacement</th>
-            <th>Application</th>
-            <th>Power</th>
-            <th>State</th>
+            <th className="py-2 pl-16 ">Engine Name</th>
+            <th className="py-2 ">Displacement</th>
+            <th className="py-2 ">Application</th>
+            <th className="py-2 ">Power</th>
+            <th className="py-2 pl-16 ">State</th>
           </tr>
         </thead>
         <tbody>
@@ -48,11 +43,11 @@ export default function Dashboard() {
           {inventoryByStateList.map((engine: any) => {
             return (
               <tr key={engine.id}>
-                <td>{engine.name}</td>
-                <td>{engine.displacement}</td>
-                <td>{engine.application}</td>
-                <td>{engine.power}</td>
-                <td>{engine.state.name}</td>
+                <td className="py-2 pl-16 ">{engine.name}</td>
+                <td className="py-2 ">{engine.displacement}</td>
+                <td className="py-2 ">{engine.application}</td>
+                <td className="py-2 ">{engine.power}</td>
+                <td className="py-2 pl-16 ">{engine.state.name}</td>
               </tr>
             );
           })}

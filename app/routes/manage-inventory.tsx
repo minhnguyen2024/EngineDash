@@ -31,12 +31,11 @@ export async function action({ request }: ActionArgs) {
       name: state,
     },
   });
-  // console.log("stateId", stateObjFromQuery)
   if (!stateObjFromQuery) {
     throw new Error("State is unavailable");
   }
   for (let i = 0; i < parseInt(quantity); i++) {
-    const inventory = await db.engine.create({
+    await db.engine.create({
       data: {
         name: name,
         displacement: parseFloat(displacement),
@@ -50,22 +49,34 @@ export async function action({ request }: ActionArgs) {
 }
 export default function ManageInventory() {
   return (
-    <div>
-      <p>Add New Inventory Record</p>
-      <form method="post">
-        <label>
-          State:{" "}
-          <select name="state" id="state">
+    <div className="flex justify-center items-center">
+      <div>
+      <h1 className="text-3xl underline font-bold p-6">
+        Add New Inventory Record
+      </h1>
+      </div>
+      <div>
+
+      <form method="post" className="rounded-md border-2 border-black w-96 ml-6">
+        <div className="inline-block ml-8">
+          <label>State: </label>
+          <select name="state" id="state" className="flex-1 rounded-md border-2 border-black leading-loose">
             {US_AVAILABLE_STATE.map((state) => (
               <option key={state} value={state}>
                 {state}
               </option>
             ))}
           </select>
-        </label>
-        <label>
-          Quantity <input type="text" name="quantity" id="quantity"></input>
-        </label>
+        </div>
+        <div className="inline-block ml-8">
+          <label>Quantity</label>
+          <input
+            type="text"
+            name="quantity"
+            id="quantity"
+            className="flex-1 rounded-md border-2 border-black w-8"
+          ></input>
+        </div>
         <ul>
           <li>
             <label>
@@ -100,6 +111,7 @@ export default function ManageInventory() {
         </ul>
         <button type="submit">Add new Inventory</button>
       </form>
+      </div>
     </div>
   );
 }
