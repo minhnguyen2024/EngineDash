@@ -24,7 +24,7 @@ function printResultTable(dist: Array<number>, numVertex: number){
 }
 
 
-function dijkstra(graph: Array<Array<number>>, src: number){
+export function dijkstra(graph: Array<Array<number>>, src: number){
     let NUM_VERTEX = graph[0].length
     let dist = new Array(NUM_VERTEX)
     let sptSet = new Array(NUM_VERTEX)
@@ -50,7 +50,7 @@ function dijkstra(graph: Array<Array<number>>, src: number){
 }
 
 
-function printInfo(data: Array<string>, resultPayload: any){
+export function printInfo(data: Array<string>, resultPayload: any){
     const result = resultPayload.dist
     const src = resultPayload.src
     console.log(resultPayload)

@@ -45,13 +45,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
-// {inventoryByStateList.map((state: any) => {
-//   return (
-//     <tr key={state.engines.id}>
-//       <td>{state.engines.name}</td>
-//       <td>{state.engines.displacement}</td>
-//       <td>{state.engines.application}</td>
-//       <td>{state.engines.power}</td>
-//     </tr>
-//   );

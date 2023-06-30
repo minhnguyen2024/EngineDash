@@ -550,6 +550,10 @@ video {
   display: table;
 }
 
+.hidden {
+  display: none;
+}
+
 .w-8 {
   width: 2rem;
 }
