@@ -28,7 +28,6 @@ export default function Dashboard() {
           </tr>
         </thead>
         <tbody>
-          
           {inventoryByStateList.map((engine: any) => {
             return (
               <tr key={engine.id}>

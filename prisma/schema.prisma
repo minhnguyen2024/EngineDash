@@ -11,7 +11,7 @@ datasource db {
 }
 
 model Engine {
-  id String @id @default(uuid())
+  uuid String @id @default(uuid())
   engineName String
   displacement Float
   application String

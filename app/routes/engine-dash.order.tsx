@@ -6,14 +6,37 @@
 // Use the (2) criteria to funnel data to Dijkstra to find nearest available state
 //TODO:
 //TODO:
-import { US_AVAILABLE_STATE, US_AVAILABLE_STATE_INDEX_MAP, US_DISTANCE_ARRAY } from "~/utils/helper-data";
+import {
+  US_AVAILABLE_STATE,
+  US_AVAILABLE_STATE_INDEX_MAP,
+  US_DISTANCE_ARRAY,
+} from "~/utils/helper-data";
 import { useActionData, useLoaderData } from "@remix-run/react";
 import { type LoaderArgs, type ActionArgs } from "@remix-run/node";
 import { db } from "~/utils/db.server";
 import { dijkstra, printInfo } from "~/utils/engine-dash-algo";
 
-const fs = require("fs/promises")
+function bubbleSort(arr: Array<number>) {
+  for (var i = 0; i < arr.length; i++) {
+    for (var j = 0; j < arr.length - i - 1; j++) {
+      if (arr[j] > arr[j + 1]) {
+        var temp = arr[j];
+        arr[j] = arr[j + 1];
+        arr[j + 1] = temp;
+      }
+    }
+  }
+  return arr;
+}
 
+function getKeyByValue(map: Map<string, number>, value: number): string {
+  for (const [key, val] of map.entries()) {
+    if (val === value) {
+      return key;
+    }
+  }
+  return ""; // Value not found
+}
 
 export async function loader({ request }: LoaderArgs) {
   const availableInventory = await db.engine.findMany({
@@ -29,17 +52,16 @@ export async function loader({ request }: LoaderArgs) {
 
 export async function action({ request }: ActionArgs) {
   const formData = await request.formData();
-  return orderEngine(formData)
-
+  return orderEngine(formData);
 }
 
-async function orderEngine(formData: FormData){
+async function orderEngine(formData: FormData) {
   const state = formData.get("state");
   const quantity = formData.get("quantity");
   const application = formData.get("application");
   const displacement = formData.get("displacement");
   const power = formData.get("power");
-  
+
   if (
     typeof application !== "string" ||
     typeof displacement !== "string" ||
@@ -58,56 +80,42 @@ async function orderEngine(formData: FormData){
     }
     throw new Error("Form not submitted correctly");
   }
-  const resultPayload = dijkstra(US_DISTANCE_ARRAY, US_AVAILABLE_STATE.indexOf(state));
+  const resultPayload = dijkstra(
+    US_DISTANCE_ARRAY,
+    US_AVAILABLE_STATE.indexOf(state)
+  );
   //returns a map containing the shortest distance info
-  const map = printInfo(US_AVAILABLE_STATE, resultPayload)
-  const dist: Array<number> = [...map.values()]
-  const sortedDistance = bubbleSort(dist)
-  //at this point you have
-  //map (shortest distances from state)
-  //dist (all distances sorted ascending)
-
-  const result = await db.$queryRaw
-  // `SELECT * FROM engine`
-  `SELECT * 
-  FROM engine e
-  INNER JOIN state s on e.stateId = s.id
-  WHERE e.displacement = ${displacement} AND e.power = ${power} AND application = ${application}`
-  console.log(result)
-  return result
-
-  // for (let i = 0; i < sortedDistance.length; i++){
-  //   const count = await db.engine.count({
-  //     where:{
-  //       stateId: US_AVAILABLE_STATE_INDEX_MAP.IN,
-  //       application: application,
-  //       power: parseInt(power),
-  //       displacement: parseFloat(displacement),
-  //     }
-  //   })
-  // }
-}
-
-function bubbleSort(arr: Array<number>) {
-  for (var i = 0; i < arr.length; i++) {
-      for (var j = 0; j < (arr.length - i - 1); j++) {
-          if (arr[j] > arr[j + 1]) {
-              var temp = arr[j]
-              arr[j] = arr[j + 1]
-              arr[j + 1] = temp
-          }
-      }
+  const map = printInfo(US_AVAILABLE_STATE, resultPayload);
+  const dist: Array<number> = [...map.values()];
+  const sortedDistance = bubbleSort(dist);
+  let sortedDistanceState: Array<string> = [];
+  for (let i = 0; i < sortedDistance.length; i++) {
+    sortedDistanceState.push(getKeyByValue(map, sortedDistance[i]));
   }
-  return arr
+  let order: Array<any> = [];
+  for (let i = 0; i < sortedDistanceState.length; i++) {
+    let nextNearestState = sortedDistanceState[i];
+    const result: Array<any> = await db.$queryRaw`SELECT * 
+    FROM engine e
+    INNER JOIN state s on e.stateId = s.id
+    WHERE e.displacement = ${displacement} 
+    AND e.power = ${power} AND application = ${application} AND s.stateName = ${nextNearestState}`;
+    order = order.concat(result);
+  }
+  let finalOrder: Array<any> = [];
+  for (let i = 0; i < parseInt(quantity); i++) {
+    finalOrder.push(order[i]);
+  }
+  return finalOrder;
 }
 
 export default function Order() {
   const availableInventory = useLoaderData<typeof loader>();
   const availableInventoryQueryResult = useActionData<typeof action>() || [];
 
-  // if (!availableInventoryQueryResult) {
-  //   throw new Error("Check Engine Availability Failed:(");
-  // }
+  if (!availableInventoryQueryResult) {
+    throw new Error("Check Engine Availability Failed:(");
+  }
 
   const displacementList = Array<number>();
   const powerList = Array<number>();
@@ -125,105 +133,118 @@ export default function Order() {
   }
   return (
     <div>
-      <p>Order Engine</p>
-      <form method="post"
-        className="rounded-md border-2 border-black w-96 ml-6"
-      >
-        <input type="hidden" value="ENGINE_AVAILABILITY_QUERY" name="_action"/>
-        <ul>
-          <li>
-            <div className="inline-block ml-8">
-              <label>
-                Choose your location:
-                <select
-                  name="state"
-                  id="state"
-                  className=" rounded-md border-2 border-black"
-                >
-                  {US_AVAILABLE_STATE.map((state) => (
-                    <option key={state} value={state}>
-                      {state}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <div className="inline-block ml-8">
-              <label>
-                Quantity{" "}
-                <input
-                  type="text"
-                  name="quantity"
-                  id="quantity"
-                  className=" rounded-md border-2 border-black"
-                ></input>
-              </label>
-            </div>
-          </li>
-          <li>
-            <label>Choose Engine Specifications</label>
-            <ul>
-              <li>
-                <div className="inline-block ml-8">
-                  <label>
-                    Power
-                    <select
-                      name="power"
-                      id="power"
-                      className=" rounded-md border-2 border-black"
-                    >
-                      {powerList.map((power) => (
-                        <option key={power} value={power}>
-                          {power} HP
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-              </li>
-              <li>
-                <div className="inline-block ml-8">
-                  <label>
-                    Applications
-                    <select
-                      name="application"
-                      id="application"
-                      className=" rounded-md border-2 border-black"
-                    >
-                      {applicationList.map((app) => (
-                        <option key={app} value={app}>
-                          {app}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-              </li>
-              <li>
-                <div className="inline-block ml-8">
-                  <label>Displacement</label>
+      <div className="flex flex-col justify-center items-center">
+        <p>Order Engine</p>
+        <form method="post" className="rounded-md border-2 border-black w-3/4">
+          <input type="hidden" value="ENGINE_AVAILABILITY_QUERY" name="_action" />
+          <ul className="flex p-4">
+            <li>
+              <div className="ml-8">
+                <label>
+                  Choose your location:
                   <select
-                    name="displacement"
-                    id="displacement"
+                    name="state"
+                    id="state"
                     className=" rounded-md border-2 border-black"
                   >
-                    {displacementList.map((dis) => (
-                      <option key={dis} value={dis}>
-                        {dis}
+                    {US_AVAILABLE_STATE.map((state) => (
+                      <option key={state} value={state}>
+                        {state}
                       </option>
                     ))}
                   </select>
+                </label>
+              </div>
+              <div className="ml-8">
+                <label>
+                  Quantity{" "}
+                  <input
+                    type="text"
+                    name="quantity"
+                    id="quantity"
+                    className=" rounded-md border-2 border-black"
+                  ></input>
+                </label>
+              </div>
+            </li>
+            <li className="ml-10">
+              <label>Choose Engine Specifications</label>
+              <ul>
+                <div className="flex">
+                  <div className="mr-16">
+                    <li>
+                      <div className="inline-block ml-8">
+                        <label>
+                          Power
+                          <select
+                            name="power"
+                            id="power"
+                            className=" rounded-md border-2 border-black"
+                          >
+                            {powerList.map((power) => (
+                              <option key={power} value={power}>
+                                {power} HP
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+                    </li>
+                    <li>
+                      <div className="inline-block ml-8">
+                        <label>
+                          Applications
+                          <select
+                            name="application"
+                            id="application"
+                            className=" rounded-md border-2 border-black"
+                          >
+                            {applicationList.map((app) => (
+                              <option key={app} value={app}>
+                                {app}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+                    </li>
+                  </div>
+                  <div>
+                    <li>
+                      <div className="inline-block ml-8">
+                        <label>Displacement</label>
+                        <select
+                          name="displacement"
+                          id="displacement"
+                          className=" rounded-md border-2 border-black"
+                        >
+                          {displacementList.map((dis) => (
+                            <option key={dis} value={dis}>
+                              {dis}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </li>
+                  </div>
                 </div>
-              </li>
-            </ul>
-          </li>
-        </ul>
-        <button type="submit" value="SEARCH_ENGINE">Order Engine</button>
-      </form>
-      
+              </ul>
+            </li>
+          </ul>
+          <div className="flex items-center justify-center inline-block pb-3">
+            <button
+              type="submit"
+              value="SEARCH_ENGINE"
+              className="rounded-md border-2 border-black px-4 py-2 bg-blue-500"
+            >
+              Order Engine
+            </button>
+          </div>
+        </form>
+      </div>
 
       <div>
-        {availableInventory.length !== 0 ? (
+        {availableInventoryQueryResult.length !== 0 ? (
           <table className="mb-4 w-full border-b-2 border-b-gray-200 text-left p-6">
             <thead className="bg-gray-200 font-semibold">
               <tr>
