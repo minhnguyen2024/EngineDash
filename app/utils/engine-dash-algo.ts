@@ -1,5 +1,5 @@
 //src: https://www.geeksforgeeks.org/dijkstras-shortest-path-algorithm-greedy-algo-7/
-
+// import { US_AVAILABLE_STATE_INDEX_MAP, US_AVAILABLE_STATE, US_DISTANCE_ARRAY } from "./helper-data"
 function getMinDistance(dist: Array<number>, sptSet: Array<boolean>, numVertex: number){
     let min = Number.MAX_VALUE
     let minIndex = -1
@@ -14,14 +14,14 @@ function getMinDistance(dist: Array<number>, sptSet: Array<boolean>, numVertex: 
 }
 
 
-function printResultTable(dist: Array<number>, numVertex: number){
-    console.log("-----------------------")
-    console.log("Vertex \t\t Distance from Source")
-    for (let i = 0; i < numVertex; i++){
-        console.log(i + "\t\t " + dist[i])
-    }
-    console.log("-----------------------")
-}
+// function printResultTable(dist: Array<number>, numVertex: number){
+//     console.log("-----------------------")
+//     console.log("Vertex \t\t Distance from Source")
+//     for (let i = 0; i < numVertex; i++){
+//         console.log(i + "\t\t " + dist[i])
+//     }
+//     console.log("-----------------------")
+// }
 
 
 export function dijkstra(graph: Array<Array<number>>, src: number){
@@ -44,43 +44,20 @@ export function dijkstra(graph: Array<Array<number>>, src: number){
             }
         }
     }
-    // printResultTable(dist, NUM_VERTEX)
     const resultPayload = { dist, src }
     return resultPayload
 }
 
 
-export function printInfo(data: Array<string>, resultPayload: any){
-    const result = resultPayload.dist
-    const src = resultPayload.src
-    console.log(resultPayload)
+export function printInfo(stateData: Array<string>, resultPayload: any){
+    const result: Array<number> = resultPayload.dist
+    const data: Array<string> = stateData
+    const map = new Map()
+    // const src = resultPayload.src
     for (let i = 0; i < result.length; i ++){
-        console.log(`Shortest distance from ${data[src]} to ${data[i]} is ${result[i]}`)
+        // console.log(`Shortest distance from ${data[src]} to ${data[i]} is ${result[i]}`)
+        map.set(data[i], result[i])
     }
+    console.log("-------------------------")
+    return map
 }
-
-
-let graph = [ [ 0, 4, 0, 0, 0, 0, 0, 8, 0 ],
-              [ 4, 0, 8, 0, 0, 0, 0, 11, 0 ],
-              [ 0, 8, 0, 7, 0, 4, 0, 0, 2 ],
-              [ 0, 0, 7, 0, 9, 14, 0, 0, 0],
-              [ 0, 0, 0, 9, 0, 10, 0, 0, 0 ],
-              [ 0, 0, 4, 14, 10, 0, 2, 0, 0],
-              [ 0, 0, 0, 0, 0, 2, 0, 1, 6 ],
-              [ 8, 11, 0, 0, 0, 0, 1, 0, 7 ],
-              [ 0, 0, 2, 0, 0, 0, 6, 7, 0 ] ]
-// dijkstra(graph, 0);
-
-
-let graph1 = [
-    [0, 6, 0, 1, 0],
-    [6, 0, 5, 2, 2],
-    [0, 5, 0, 0, 5],
-    [1, 2, 0, 0, 1],
-    [0, 2, 5, 1, 0]
-]
-
-
-let data = ["IN", "PA", "NY", "IL", "MI"]    
-const resultPayload = dijkstra(graph1, 1);
-printInfo(data, resultPayload)

@@ -6,11 +6,14 @@
 // Use the (2) criteria to funnel data to Dijkstra to find nearest available state
 //TODO:
 //TODO:
-import { US_AVAILABLE_STATE, US_MAP } from "~/utils/helper-data";
+import { US_AVAILABLE_STATE, US_AVAILABLE_STATE_INDEX_MAP, US_DISTANCE_ARRAY } from "~/utils/helper-data";
 import { useActionData, useLoaderData } from "@remix-run/react";
 import { type LoaderArgs, type ActionArgs } from "@remix-run/node";
 import { db } from "~/utils/db.server";
 import { dijkstra, printInfo } from "~/utils/engine-dash-algo";
+
+const fs = require("fs/promises")
+
 
 export async function loader({ request }: LoaderArgs) {
   const availableInventory = await db.engine.findMany({
@@ -27,9 +30,10 @@ export async function loader({ request }: LoaderArgs) {
 export async function action({ request }: ActionArgs) {
   const formData = await request.formData();
   return orderEngine(formData)
+
 }
 
-async function orderEngine(formData: any){
+async function orderEngine(formData: FormData){
   const state = formData.get("state");
   const quantity = formData.get("quantity");
   const application = formData.get("application");
@@ -54,20 +58,47 @@ async function orderEngine(formData: any){
     }
     throw new Error("Form not submitted correctly");
   }
-  const resultPayload = dijkstra(US_MAP, US_AVAILABLE_STATE.indexOf(state));
-  printInfo(US_AVAILABLE_STATE, resultPayload)
-  
-  const queryResult = await db.engine.findMany({
-    where: {
-      application: application,
-      power: parseInt(power),
-      displacement: parseFloat(displacement),
-    },
-    include: {
-      state: true,
-    },
-  });
-  return queryResult;
+  const resultPayload = dijkstra(US_DISTANCE_ARRAY, US_AVAILABLE_STATE.indexOf(state));
+  //returns a map containing the shortest distance info
+  const map = printInfo(US_AVAILABLE_STATE, resultPayload)
+  const dist: Array<number> = [...map.values()]
+  const sortedDistance = bubbleSort(dist)
+  //at this point you have
+  //map (shortest distances from state)
+  //dist (all distances sorted ascending)
+
+  const result = await db.$queryRaw
+  // `SELECT * FROM engine`
+  `SELECT * 
+  FROM engine e
+  INNER JOIN state s on e.stateId = s.id
+  WHERE e.displacement = ${displacement} AND e.power = ${power} AND application = ${application}`
+  console.log(result)
+  return result
+
+  // for (let i = 0; i < sortedDistance.length; i++){
+  //   const count = await db.engine.count({
+  //     where:{
+  //       stateId: US_AVAILABLE_STATE_INDEX_MAP.IN,
+  //       application: application,
+  //       power: parseInt(power),
+  //       displacement: parseFloat(displacement),
+  //     }
+  //   })
+  // }
+}
+
+function bubbleSort(arr: Array<number>) {
+  for (var i = 0; i < arr.length; i++) {
+      for (var j = 0; j < (arr.length - i - 1); j++) {
+          if (arr[j] > arr[j + 1]) {
+              var temp = arr[j]
+              arr[j] = arr[j + 1]
+              arr[j + 1] = temp
+          }
+      }
+  }
+  return arr
 }
 
 export default function Order() {
@@ -207,11 +238,12 @@ export default function Order() {
               {availableInventoryQueryResult.map((engine: any) => {
                 return (
                   <tr key={engine.id}>
-                    <td className="py-2 pl-16 ">{engine.name}</td>
+                    <td className="py-2 pl-16 ">{engine.engineName}</td>
                     <td className="py-2 ">{engine.displacement}</td>
                     <td className="py-2 ">{engine.application}</td>
                     <td className="py-2 ">{engine.power}</td>
-                    <td className="py-2 pl-16 ">{engine.state.name}</td>
+                    <td className="py-2 pl-16 ">{engine.stateName}</td>
+                    {/* <td className="py-2 pl-16 ">{engine.state.name}</td> */}
                   </tr>
                 );
               })}

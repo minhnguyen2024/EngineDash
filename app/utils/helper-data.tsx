@@ -56,8 +56,20 @@ export const US_STATES = [
     "Agriculture", "Mining", "Marine", "Rail"
   ]
 
-  export const US_AVAILABLE_STATE = ['IL', 'IN',' KS',' KY', 'MI', 'MO', 'OH', 'PA', 'TN', 'WI']
-  export const US_MAP = [
+  export const US_AVAILABLE_STATE = ['IL', 'IN', 'KS', 'KY', 'MI', 'MO', 'OH', 'PA', 'TN', 'WI']
+  export const US_AVAILABLE_STATE_INDEX_MAP = {
+    "IL": 0,
+    "IN": 1,
+    'KS': 2,
+    'KY': 3, 
+    'MI': 4, 
+    'MO': 5,
+    'OH': 6,
+    'PA': 7,
+    'TN': 8,
+    'WI': 9
+  }
+  export const US_DISTANCE_ARRAY = [
     [0,3,0,0,0,4,0,0,0,4],
     [3,0,0,7,5,0,4,0,0,0],
     [0,0,0,0,0,5,0,0,0,0],

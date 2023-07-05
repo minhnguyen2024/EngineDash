@@ -32,11 +32,11 @@ export default function Dashboard() {
           {inventoryByStateList.map((engine: any) => {
             return (
               <tr key={engine.id}>
-                <td className="py-2 pl-16 ">{engine.name}</td>
+                <td className="py-2 pl-16 ">{engine.engineName}</td>
                 <td className="py-2 ">{engine.displacement}</td>
                 <td className="py-2 ">{engine.application}</td>
                 <td className="py-2 ">{engine.power}</td>
-                <td className="py-2 pl-16 ">{engine.state.name}</td>
+                <td className="py-2 pl-16 ">{engine.state.stateName}</td>
               </tr>
             );
           })}

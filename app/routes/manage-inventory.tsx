@@ -29,7 +29,7 @@ export async function action({ request }: ActionArgs) {
   
   const stateObjFromQuery = await db.state.findUnique({
     where: {
-      name: state,
+      stateName: state,
     },
   });
   if (!stateObjFromQuery) {
@@ -38,7 +38,7 @@ export async function action({ request }: ActionArgs) {
   for (let i = 0; i < parseInt(quantity); i++) {
     await db.engine.create({
       data: {
-        name: name,
+        engineName: name,
         displacement: parseFloat(displacement),
         application: application,
         power: parseInt(power),

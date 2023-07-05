@@ -12,7 +12,7 @@ datasource db {
 
 model Engine {
   id String @id @default(uuid())
-  name String
+  engineName String
   displacement Float
   application String
   power Int
@@ -22,7 +22,7 @@ model Engine {
 
 model State {
   id  Int  @id @default(autoincrement())
-  name String @unique
+  stateName String @unique
   engines Engine[]
 }
 

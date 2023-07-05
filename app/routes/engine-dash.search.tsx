@@ -1,6 +1,12 @@
-import { useLoaderData } from "@remix-run/react";
-import { US_STATES } from "~/utils/helper-data";
+import { useActionData, useLoaderData } from "@remix-run/react";
 import { db } from "~/utils/db.server";
+import { type ActionArgs } from "@remix-run/node";
+
+//enigne search: allow search for engine availability
+//regardless of state or quantity
+//REAL-TIME inventory update: shows availalble enigne
+//TODO: loader: fetch real-time inventory data
+//TODO: action: create query for engine availability
 export async function loader() {
   const availableInventory = await db.engine.findMany({
     select: {
@@ -12,72 +18,157 @@ export async function loader() {
   });
   return availableInventory;
 }
+
+export async function action({ request }: ActionArgs) {
+  const formData = await request.formData();
+  return engineAvailabilityQuery(formData);
+}
+
+async function engineAvailabilityQuery(formData: FormData) {
+  const application = formData.get("application");
+  const displacement = formData.get("displacement");
+  const power = formData.get("power");
+
+  if (
+    typeof application !== "string" ||
+    typeof displacement !== "string" ||
+    typeof power !== "string"
+  ) {
+    if (application === "" || displacement === "" || power === "") {
+      throw new Error("Please enter all data fields");
+    }
+    throw new Error("Form not submitted correctly");
+  }
+
+  const queryResult = await db.engine.findMany({
+    where: {
+      application: application,
+      power: parseInt(power),
+      displacement: parseFloat(displacement),
+    },
+    include: {
+      state: true,
+    },
+  });
+  return queryResult;
+}
 export default function EngineSearch() {
   const availableInventory = useLoaderData<typeof loader>();
+  const availableInventoryQueryResult = useActionData<typeof action>() || [];
+
   const displacementList = Array<number>();
+  const powerList = Array<number>();
+  const applicationList = Array<string>();
   for (let i = 0; i < availableInventory.length; i++) {
-    if (!displacementList.includes(availableInventory[i].displacement)) {
+    if (
+      !displacementList.includes(availableInventory[i].displacement) &&
+      !powerList.includes(availableInventory[i].power) &&
+      !applicationList.includes(availableInventory[i].application)
+    ) {
       displacementList.push(availableInventory[i].displacement);
+      powerList.push(availableInventory[i].power);
+      applicationList.push(availableInventory[i].application);
     }
   }
-  console.log(displacementList);
 
   return (
     <div>
       <p> Engine Search</p>
-      <form method="post">
-        <ul>
-          <li>
-            <label>
-              Choose Your State
-              <select name="state" id="state">
-                {US_STATES.map((state) => (
-                  <option key={state} value={state}>
-                    {state}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </li>
-          <li>
-            <label>Choose Engine Specifications</label>
-            <ul>
-              <li>
+      <form
+        method="post"
+        className="rounded-md border-2 border-black w-96 ml-6"
+      >
+        <input type="hidden" value="ENGINE_AVAILABILITY_QUERY" name="_action" />
+
+        <li>
+          <label>Choose Engine Specifications</label>
+          <ul>
+            <li>
+              <div className="inline-block ml-8">
                 <label>
                   Power
-                  <select name="select-engine-type" id="select-engine-type">
-                    <option value="power">2 Liters</option>
+                  <select
+                    name="power"
+                    id="power"
+                    className=" rounded-md border-2 border-black"
+                  >
+                    {powerList.map((power) => (
+                      <option key={power} value={power}>
+                        {power} HP
+                      </option>
+                    ))}
                   </select>
                 </label>
-              </li>
-              <li>
+              </div>
+            </li>
+            <li>
+              <div className="inline-block ml-8">
                 <label>
                   Applications
                   <select
-                    name="select-engine-application"
-                    id="select-engine-application"
+                    name="application"
+                    id="application"
+                    className=" rounded-md border-2 border-black"
                   >
-                    <option value="agriculture">Agriculture</option>
-                    <option value="construction">Construction</option>
-                    <option value="mining">Mining</option>
-                    <option value="marine">Marine</option>
+                    {applicationList.map((app) => (
+                      <option key={app} value={app}>
+                        {app}
+                      </option>
+                    ))}
                   </select>
                 </label>
-              </li>
-              <li>
-                Displacement
-                <select name="displacement" id="displacement">
+              </div>
+            </li>
+            <li>
+              <div className="inline-block ml-8">
+                <label>Displacement</label>
+                <select
+                  name="displacement"
+                  id="displacement"
+                  className=" rounded-md border-2 border-black"
+                >
                   {displacementList.map((dis) => (
                     <option key={dis} value={dis}>
                       {dis}
                     </option>
                   ))}
                 </select>
-              </li>
-            </ul>
-          </li>
-        </ul>
+              </div>
+            </li>
+          </ul>
+        </li>
+        <button>Search For Engine</button>
       </form>
+      <div>
+        {availableInventory.length !== 0 ? (
+          <table className="mb-4 w-full border-b-2 border-b-gray-200 text-left p-6">
+            <thead className="bg-gray-200 font-semibold">
+              <tr>
+                <th className="py-2 pl-16 ">Engine Name</th>
+                <th className="py-2 ">Displacement</th>
+                <th className="py-2 ">Application</th>
+                <th className="py-2 ">Power</th>
+                <th className="py-2 pl-16 ">State</th>
+              </tr>
+            </thead>
+            <tbody>
+              {availableInventoryQueryResult.map((engine: any) => {
+                return (
+                  <tr key={engine.id}>
+                    <td className="py-2 pl-16 ">{engine.name}</td>
+                    <td className="py-2 ">{engine.displacement}</td>
+                    <td className="py-2 ">{engine.application}</td>
+                    <td className="py-2 ">{engine.power}</td>
+                    <td className="py-2 pl-16 ">{engine.state.name}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        ) : (
+          <p>No Available Engines Found</p>
+        )}
+      </div>
     </div>
   );
 }
