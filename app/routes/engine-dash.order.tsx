@@ -54,14 +54,14 @@ export async function action({ request }: ActionArgs) {
   } else if (_action === "CONFIRM_ENGINE_ORDER") {
     let uuidList: Array<string> = [];
     const result = await queryEngineAvailabilityUsingDijkstra(formData);
-    for (let i = 0; i < result.length; i++) {
-      uuidList.push(result[i].uuid);
+    for (let i = 0; i < result.finalOrder.length; i++) {
+      uuidList.push(result.finalOrder[i].uuid);
     }
-    const url = new URL(request.url);
-    url.searchParams.set("uuid", uuidList.toString());
-    console.log(url);
-    // confirmOrderEngine(uuidList)
-    return redirect(url.toString());
+    // const url = new URL(request.url);
+    // url.searchParams.set("uuid", uuidList.toString());
+    // console.log(url);
+    confirmOrderEngine(uuidList);
+    return redirect("/dashboard");
   }
 }
 
@@ -71,7 +71,7 @@ async function queryEngineAvailabilityUsingDijkstra(formData: FormData) {
   const application = formData.get("application");
   const displacement = formData.get("displacement");
   const power = formData.get("power");
-
+  const userInput = { state, quantity, application, displacement, power };
   if (
     typeof application !== "string" ||
     typeof displacement !== "string" ||
@@ -94,7 +94,6 @@ async function queryEngineAvailabilityUsingDijkstra(formData: FormData) {
     US_DISTANCE_ARRAY,
     US_AVAILABLE_STATE.indexOf(state)
   );
-  //returns a map containing the shortest distance info
   const map = printInfo(US_AVAILABLE_STATE, resultPayload);
   const dist: Array<number> = [...map.values()];
   const sortedDistance = bubbleSort(dist);
@@ -116,7 +115,7 @@ async function queryEngineAvailabilityUsingDijkstra(formData: FormData) {
   for (let i = 0; i < parseInt(quantity); i++) {
     finalOrder.push(order[i]);
   }
-  return finalOrder;
+  return { finalOrder, userInput };
 }
 
 async function confirmOrderEngine(uuidList: Array<string>) {
@@ -127,7 +126,17 @@ async function confirmOrderEngine(uuidList: Array<string>) {
 
 export default function Order() {
   const availableInventory = useLoaderData<typeof loader>();
-  const availableInventoryQueryResult = useActionData<typeof action>() || [];
+  const availableInventoryQueryResult = useActionData<typeof action>() || {
+    finalOrder: [],
+    userInput: {},
+  };
+  let data: Array<any> = availableInventoryQueryResult.finalOrder || [];
+  const input: any = availableInventoryQueryResult.userInput || {};
+  data = data.filter((item) => item !== null);
+  if(data.length < parseInt(input.quantity)){
+    input.warning = `There are only ${data.length} engines available. Do you want to proceed?`
+  }
+  console.log(data);
 
   if (!availableInventoryQueryResult) {
     throw new Error("Check Engine Availability Failed:(");
@@ -148,32 +157,30 @@ export default function Order() {
     }
   }
   return (
-    <div>
+    <div className="p-4">
       <div className="flex flex-col justify-center items-center">
-        <p>Order Engine</p>
         <form method="post" className="rounded-md border-2 border-black w-3/4">
           <input
             type="hidden"
             value="ENGINE_AVAILABILITY_QUERY"
             name="_action"
           />
+          <div></div>
           <ul className="flex p-4">
             <li className="py-3">
               <div className="ml-8 my-3">
-                <label className="mr-3">
-                  Choose your location:
-                </label>
-                  <select
-                    name="state"
-                    id="state"
-                    className=" rounded-md border-2 border-black"
-                  >
-                    {US_AVAILABLE_STATE.map((state) => (
-                      <option key={state} value={state}>
-                        {state}
-                      </option>
-                    ))}
-                  </select>
+                <label className="mr-3">Choose your location:</label>
+                <select
+                  name="state"
+                  id="state"
+                  className=" rounded-md border-2 border-black"
+                >
+                  {US_AVAILABLE_STATE.map((state) => (
+                    <option key={state} value={state}>
+                      {state}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="ml-8">
                 <label className="mr-28">Quantity </label>
@@ -186,7 +193,9 @@ export default function Order() {
               </div>
             </li>
             <li className="">
-              <label className="ml-20 p-3 font-semibold">Choose Engine Specifications</label>
+              <label className="ml-20 p-3 font-semibold">
+                Choose Engine Specifications
+              </label>
               <ul>
                 <div className="flex">
                   <h1 className="font-extrabold p-6">&gt;&gt;</h1>
@@ -209,20 +218,18 @@ export default function Order() {
                     </li>
                     <li>
                       <div className="inline-block">
-                        <label className="mr-3">
-                          Applications
-                        </label>
-                          <select
-                            name="application"
-                            id="application"
-                            className=" rounded-md border-2 border-black"
-                          >
-                            {applicationList.map((app) => (
-                              <option key={app} value={app}>
-                                {app}
-                              </option>
-                            ))}
-                          </select>
+                        <label className="mr-3">Applications</label>
+                        <select
+                          name="application"
+                          id="application"
+                          className=" rounded-md border-2 border-black"
+                        >
+                          {applicationList.map((app) => (
+                            <option key={app} value={app}>
+                              {app}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     </li>
                   </div>
@@ -249,6 +256,16 @@ export default function Order() {
               </ul>
             </li>
           </ul>
+          <div>
+            <p className="p-3">
+              State: {input.state} &nbsp;
+              Quantity: {input.quantity} &nbsp;
+              Application: {input.application} &nbsp;
+              Dispacement: {input.displacement} &nbsp;
+              Power: {input.power}
+              { input.warning ? <p className="text-red-600 font-extrabold">Warning: {input.warning}</p> : <p className="text-green-500 font-extrabold">Engines are available</p>}
+            </p>
+          </div>
           <div className="flex items-center justify-center inline-block p-5">
             <button
               type="submit"
@@ -261,9 +278,9 @@ export default function Order() {
             <p>
               Please reivew the engines' specifications and
               location&#40;State&#41;. <br />
-              The engine&#40;s&#41; location&#40;s&#41; are choosen based on
+              The engine&#40;s&#41; are choosen based on
               logistical proximity to your location. <br />
-              RE-ENTER the order quantity after revision.
+              Confirm your order information by RE-ENTERING all information.
             </p>
             <h1 className="font-extrabold p-6">&gt;&gt;</h1>
             <button
@@ -279,7 +296,7 @@ export default function Order() {
       </div>
 
       <div>
-        {availableInventoryQueryResult.length !== 0 ? (
+        {data.length !== 0 ? (
           <table className="mb-4 w-full border-b-2 border-b-gray-200 text-left p-6">
             <thead className="bg-gray-200 font-semibold">
               <tr>
@@ -292,7 +309,7 @@ export default function Order() {
               </tr>
             </thead>
             <tbody>
-              {availableInventoryQueryResult.map((engine: any) => {
+              {data.map((engine: any) => {
                 return (
                   <tr key={engine.uuid}>
                     <td className="py-2 pl-16 ">{engine.uuid}</td>
@@ -301,7 +318,6 @@ export default function Order() {
                     <td className="py-2 ">{engine.application}</td>
                     <td className="py-2 ">{engine.power}</td>
                     <td className="py-2 pl-16 ">{engine.stateName}</td>
-                    {/* <td className="py-2 pl-16 ">{engine.state.name}</td> */}
                   </tr>
                 );
               })}
@@ -314,6 +330,3 @@ export default function Order() {
     </div>
   );
 }
-
-//SELECT * FROM db where (power <= {powerLowerBound} AND power >= {powerUpperBound})
-// AND application = {application} and quantity >= {quantity}
