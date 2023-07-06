@@ -15,6 +15,7 @@ import { useActionData, useLoaderData } from "@remix-run/react";
 import { type LoaderArgs, type ActionArgs } from "@remix-run/node";
 import { db } from "~/utils/db.server";
 import { dijkstra, printInfo } from "~/utils/engine-dash-algo";
+import { useState } from "react";
 
 function bubbleSort(arr: Array<number>) {
   for (var i = 0; i < arr.length; i++) {
@@ -52,10 +53,26 @@ export async function loader({ request }: LoaderArgs) {
 
 export async function action({ request }: ActionArgs) {
   const formData = await request.formData();
-  return orderEngine(formData);
+
+  let { _action } = Object.fromEntries(formData);
+  if (_action === "ENGINE_AVAILABILITY_QUERY") {
+    const data = await queryEngineAvailabilityUsingDijkstra(formData)
+    console.log(data)
+    return queryEngineAvailabilityUsingDijkstra(formData);
+  } else if (_action === "CONFIRM_ENGINE_ORDER") {
+    console.log("In CONFIRM_ENGINE_ORDER");
+    let uuidList: Array<string> = [];
+    const result = await queryEngineAvailabilityUsingDijkstra(formData);
+    for (let i = 0; i < result.length; i++) {
+      // console.log(result[i].uuid);
+      uuidList.push(result[i].uuid);
+    }
+    confirmOrderEngine(uuidList)
+    return queryEngineAvailabilityUsingDijkstra(formData);
+  }
 }
 
-async function orderEngine(formData: FormData) {
+async function queryEngineAvailabilityUsingDijkstra(formData: FormData) {
   const state = formData.get("state");
   const quantity = formData.get("quantity");
   const application = formData.get("application");
@@ -109,6 +126,12 @@ async function orderEngine(formData: FormData) {
   return finalOrder;
 }
 
+async function confirmOrderEngine(uuidList: Array<string>){
+  for (let i = 0; i < uuidList.length; i++){
+    await db.$queryRaw`DELETE FROM engine e WHERE e.uuid = ${uuidList[i]}`
+  }
+}
+
 export default function Order() {
   const availableInventory = useLoaderData<typeof loader>();
   const availableInventoryQueryResult = useActionData<typeof action>() || [];
@@ -136,7 +159,11 @@ export default function Order() {
       <div className="flex flex-col justify-center items-center">
         <p>Order Engine</p>
         <form method="post" className="rounded-md border-2 border-black w-3/4">
-          <input type="hidden" value="ENGINE_AVAILABILITY_QUERY" name="_action" />
+          <input
+            type="hidden"
+            value="ENGINE_AVAILABILITY_QUERY"
+            name="_action"
+          />
           <ul className="flex p-4">
             <li>
               <div className="ml-8">
@@ -156,18 +183,17 @@ export default function Order() {
                 </label>
               </div>
               <div className="ml-8">
-                <label>
-                  Quantity{" "}
-                  <input
-                    type="text"
-                    name="quantity"
-                    id="quantity"
-                    className=" rounded-md border-2 border-black"
-                  ></input>
-                </label>
+                <label>Quantity </label>
+                <input
+                  type="text"
+                  name="quantity"
+                  id="quantity"
+                  className=" rounded-md border-2 border-black"
+                ></input>
               </div>
             </li>
-            <li className="ml-10">
+            <h1 className="font-extrabold p-6">&gt;&gt;</h1>
+            <li className="">
               <label>Choose Engine Specifications</label>
               <ul>
                 <div className="flex">
@@ -191,7 +217,7 @@ export default function Order() {
                       </div>
                     </li>
                     <li>
-                      <div className="inline-block ml-8">
+                      <div className="inline-block">
                         <label>
                           Applications
                           <select
@@ -209,9 +235,10 @@ export default function Order() {
                       </div>
                     </li>
                   </div>
+                  <h1 className="font-extrabold p-6">&gt;&gt;</h1>
                   <div>
                     <li>
-                      <div className="inline-block ml-8">
+                      <div className="inline-block">
                         <label>Displacement</label>
                         <select
                           name="displacement"
@@ -237,7 +264,24 @@ export default function Order() {
               value="SEARCH_ENGINE"
               className="rounded-md border-2 border-black px-4 py-2 bg-blue-500"
             >
-              Order Engine
+              Query Nearest Availability
+            </button>
+            <h1 className="font-extrabold p-6">&gt;&gt;</h1>
+            <p>
+              Please reivew the engines' specifications and
+              location&#40;State&#41;. <br />
+              The engine&#40;s&#41; location&#40;s&#41; are choosen based on
+              logistical proximity to your location. <br />
+              RE-ENTER the order quantity after revision.
+            </p>
+            <h1 className="font-extrabold p-6">&gt;&gt;</h1>
+            <button
+              type="submit"
+              value="CONFIRM_ENGINE_ORDER"
+              name="_action"
+              className="rounded-md border-2 border-black px-4 py-2 bg-blue-500"
+            >
+              Confirm Order
             </button>
           </div>
         </form>
