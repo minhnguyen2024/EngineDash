@@ -20,7 +20,8 @@ export default function Dashboard() {
       <table className="mb-4 w-full border-b-2 border-b-gray-200 text-left p-6">
         <thead className="bg-gray-200 font-semibold">
           <tr>
-            <th className="py-2 pl-16 ">Engine Name</th>
+            <th className="py-2 pl-16 ">UUID</th>
+            <th className="py-2">Engine Name</th>
             <th className="py-2 ">Displacement</th>
             <th className="py-2 ">Application</th>
             <th className="py-2 ">Power</th>
@@ -30,8 +31,9 @@ export default function Dashboard() {
         <tbody>
           {inventoryByStateList.map((engine: any) => {
             return (
-              <tr key={engine.id}>
-                <td className="py-2 pl-16 ">{engine.engineName}</td>
+              <tr key={engine.uuid}>
+                <td className="py-2 pl-16 ">{engine.uuid}</td>
+                <td className="py-2">{engine.engineName}</td>
                 <td className="py-2 ">{engine.displacement}</td>
                 <td className="py-2 ">{engine.application}</td>
                 <td className="py-2 ">{engine.power}</td>

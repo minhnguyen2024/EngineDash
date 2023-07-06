@@ -22,7 +22,7 @@ export default function App() {
   useEffect(() => {
     setActiveLink(location.pathname);
   }, [location]);
-  console.log("activeLink ", location.pathname)
+
   return (
     <html lang="en">
       <head>

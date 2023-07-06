@@ -6,16 +6,11 @@
 // Use the (2) criteria to funnel data to Dijkstra to find nearest available state
 //TODO:
 //TODO:
-import {
-  US_AVAILABLE_STATE,
-  US_AVAILABLE_STATE_INDEX_MAP,
-  US_DISTANCE_ARRAY,
-} from "~/utils/helper-data";
+import { US_AVAILABLE_STATE, US_DISTANCE_ARRAY } from "~/utils/helper-data";
 import { useActionData, useLoaderData } from "@remix-run/react";
-import { type LoaderArgs, type ActionArgs } from "@remix-run/node";
+import { type LoaderArgs, type ActionArgs, redirect } from "@remix-run/node";
 import { db } from "~/utils/db.server";
 import { dijkstra, printInfo } from "~/utils/engine-dash-algo";
-import { useState } from "react";
 
 function bubbleSort(arr: Array<number>) {
   for (var i = 0; i < arr.length; i++) {
@@ -53,22 +48,20 @@ export async function loader({ request }: LoaderArgs) {
 
 export async function action({ request }: ActionArgs) {
   const formData = await request.formData();
-
   let { _action } = Object.fromEntries(formData);
   if (_action === "ENGINE_AVAILABILITY_QUERY") {
-    const data = await queryEngineAvailabilityUsingDijkstra(formData)
-    console.log(data)
     return queryEngineAvailabilityUsingDijkstra(formData);
   } else if (_action === "CONFIRM_ENGINE_ORDER") {
-    console.log("In CONFIRM_ENGINE_ORDER");
     let uuidList: Array<string> = [];
     const result = await queryEngineAvailabilityUsingDijkstra(formData);
     for (let i = 0; i < result.length; i++) {
-      // console.log(result[i].uuid);
       uuidList.push(result[i].uuid);
     }
-    confirmOrderEngine(uuidList)
-    return queryEngineAvailabilityUsingDijkstra(formData);
+    const url = new URL(request.url);
+    url.searchParams.set("uuid", uuidList.toString());
+    console.log(url);
+    // confirmOrderEngine(uuidList)
+    return redirect(url.toString());
   }
 }
 
@@ -126,9 +119,9 @@ async function queryEngineAvailabilityUsingDijkstra(formData: FormData) {
   return finalOrder;
 }
 
-async function confirmOrderEngine(uuidList: Array<string>){
-  for (let i = 0; i < uuidList.length; i++){
-    await db.$queryRaw`DELETE FROM engine e WHERE e.uuid = ${uuidList[i]}`
+async function confirmOrderEngine(uuidList: Array<string>) {
+  for (let i = 0; i < uuidList.length; i++) {
+    await db.$queryRaw`DELETE FROM engine WHERE uuid = ${uuidList[i]}`;
   }
 }
 
@@ -165,10 +158,11 @@ export default function Order() {
             name="_action"
           />
           <ul className="flex p-4">
-            <li>
-              <div className="ml-8">
-                <label>
+            <li className="py-3">
+              <div className="ml-8 my-3">
+                <label className="mr-3">
                   Choose your location:
+                </label>
                   <select
                     name="state"
                     id="state"
@@ -180,46 +174,44 @@ export default function Order() {
                       </option>
                     ))}
                   </select>
-                </label>
               </div>
               <div className="ml-8">
-                <label>Quantity </label>
+                <label className="mr-28">Quantity </label>
                 <input
                   type="text"
                   name="quantity"
                   id="quantity"
-                  className=" rounded-md border-2 border-black"
+                  className=" rounded-md border-2 border-black w-10"
                 ></input>
               </div>
             </li>
-            <h1 className="font-extrabold p-6">&gt;&gt;</h1>
             <li className="">
-              <label>Choose Engine Specifications</label>
+              <label className="ml-20 p-3 font-semibold">Choose Engine Specifications</label>
               <ul>
                 <div className="flex">
-                  <div className="mr-16">
+                  <h1 className="font-extrabold p-6">&gt;&gt;</h1>
+                  <div className="mr-8 ml-8">
                     <li>
-                      <div className="inline-block ml-8">
-                        <label>
-                          Power
-                          <select
-                            name="power"
-                            id="power"
-                            className=" rounded-md border-2 border-black"
-                          >
-                            {powerList.map((power) => (
-                              <option key={power} value={power}>
-                                {power} HP
-                              </option>
-                            ))}
-                          </select>
-                        </label>
+                      <div className="inline-block mb-3">
+                        <label className="mr-14">Power</label>
+                        <select
+                          name="power"
+                          id="power"
+                          className=" rounded-md border-2 border-black"
+                        >
+                          {powerList.map((power) => (
+                            <option key={power} value={power}>
+                              {power} HP
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     </li>
                     <li>
                       <div className="inline-block">
-                        <label>
+                        <label className="mr-3">
                           Applications
+                        </label>
                           <select
                             name="application"
                             id="application"
@@ -231,7 +223,6 @@ export default function Order() {
                               </option>
                             ))}
                           </select>
-                        </label>
                       </div>
                     </li>
                   </div>
@@ -239,7 +230,7 @@ export default function Order() {
                   <div>
                     <li>
                       <div className="inline-block">
-                        <label>Displacement</label>
+                        <label className="mr-3">Displacement</label>
                         <select
                           name="displacement"
                           id="displacement"
@@ -258,7 +249,7 @@ export default function Order() {
               </ul>
             </li>
           </ul>
-          <div className="flex items-center justify-center inline-block pb-3">
+          <div className="flex items-center justify-center inline-block p-5">
             <button
               type="submit"
               value="SEARCH_ENGINE"
@@ -292,6 +283,7 @@ export default function Order() {
           <table className="mb-4 w-full border-b-2 border-b-gray-200 text-left p-6">
             <thead className="bg-gray-200 font-semibold">
               <tr>
+                <th className="py-2 pl-16 ">UUID</th>
                 <th className="py-2 pl-16 ">Engine Name</th>
                 <th className="py-2 ">Displacement</th>
                 <th className="py-2 ">Application</th>
@@ -302,7 +294,8 @@ export default function Order() {
             <tbody>
               {availableInventoryQueryResult.map((engine: any) => {
                 return (
-                  <tr key={engine.id}>
+                  <tr key={engine.uuid}>
+                    <td className="py-2 pl-16 ">{engine.uuid}</td>
                     <td className="py-2 pl-16 ">{engine.engineName}</td>
                     <td className="py-2 ">{engine.displacement}</td>
                     <td className="py-2 ">{engine.application}</td>
