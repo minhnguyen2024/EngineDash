@@ -56,21 +56,18 @@ export default function EngineSearch() {
   const availableInventory = useLoaderData<typeof loader>();
   const availableInventoryQueryResult = useActionData<typeof action>() || [];
 
-  const displacementList = Array<number>();
-  const powerList = Array<number>();
-  const applicationList = Array<string>();
-  for (let i = 0; i < availableInventory.length; i++) {
-    if (
-      !displacementList.includes(availableInventory[i].displacement) &&
-      !powerList.includes(availableInventory[i].power) &&
-      !applicationList.includes(availableInventory[i].application)
-    ) {
-      displacementList.push(availableInventory[i].displacement);
-      powerList.push(availableInventory[i].power);
-      applicationList.push(availableInventory[i].application);
-    }
-  }
-
+  let displacementList = Array<number>();
+  let powerList = Array<number>();
+  let applicationList = Array<string>();
+  displacementList = availableInventory
+    .map((item) => item.displacement)
+    .filter((value, index, array) => array.indexOf(value) === index);
+  powerList = availableInventory
+    .map((item) => item.power)
+    .filter((value, index, array) => array.indexOf(value) === index);
+  applicationList = availableInventory
+    .map((item) => item.application)
+    .filter((value, index, array) => array.indexOf(value) === index);
   return (
     <div>
       <p> Engine Search</p>

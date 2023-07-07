@@ -25,15 +25,6 @@ function bubbleSort(arr: Array<number>) {
   return arr;
 }
 
-function getKeyByValue(map: Map<string, number>, value: number): string {
-  for (const [key, val] of map.entries()) {
-    if (val === value) {
-      return key;
-    }
-  }
-  return ""; // Value not found
-}
-
 export async function loader({ request }: LoaderArgs) {
   const availableInventory = await db.engine.findMany({
     select: {
@@ -54,12 +45,9 @@ export async function action({ request }: ActionArgs) {
   } else if (_action === "CONFIRM_ENGINE_ORDER") {
     let uuidList: Array<string> = [];
     const result = await queryEngineAvailabilityUsingDijkstra(formData);
-    for (let i = 0; i < result.finalOrder.length; i++) {
-      uuidList.push(result.finalOrder[i].uuid);
+    for (const element of result.finalOrder) {
+      uuidList.push(element.uuid);
     }
-    // const url = new URL(request.url);
-    // url.searchParams.set("uuid", uuidList.toString());
-    // console.log(url);
     confirmOrderEngine(uuidList);
     return redirect("/dashboard");
   }
@@ -98,12 +86,16 @@ async function queryEngineAvailabilityUsingDijkstra(formData: FormData) {
   const dist: Array<number> = [...map.values()];
   const sortedDistance = bubbleSort(dist);
   let sortedDistanceState: Array<string> = [];
-  for (let i = 0; i < sortedDistance.length; i++) {
-    sortedDistanceState.push(getKeyByValue(map, sortedDistance[i]));
-  }
+
+  sortedDistanceState = Array.from(map.keys()).sort((a, b) => {
+    return map.get(a) - map.get(b);
+  });
+
+  console.log(sortedDistanceState);
+  console.log(sortedDistance);
   let order: Array<any> = [];
-  for (let i = 0; i < sortedDistanceState.length; i++) {
-    let nextNearestState = sortedDistanceState[i];
+  for (let element = 0; element < sortedDistanceState.length; element++) {
+    let nextNearestState = sortedDistanceState[element];
     const result: Array<any> = await db.$queryRaw`SELECT * 
     FROM engine e
     INNER JOIN state s on e.stateId = s.id
@@ -119,8 +111,9 @@ async function queryEngineAvailabilityUsingDijkstra(formData: FormData) {
 }
 
 async function confirmOrderEngine(uuidList: Array<string>) {
-  for (let i = 0; i < uuidList.length; i++) {
-    await db.$queryRaw`DELETE FROM engine WHERE uuid = ${uuidList[i]}`;
+  console.log(uuidList);
+  for (const element of uuidList) {
+    await db.$queryRaw`DELETE FROM engine WHERE uuid = ${element}`;
   }
 }
 
@@ -130,31 +123,28 @@ export default function Order() {
     finalOrder: [],
     userInput: {},
   };
-  let data: Array<any> = availableInventoryQueryResult.finalOrder || [];
-  const input: any = availableInventoryQueryResult.userInput || {};
-  data = data.filter((item) => item !== null);
-  if(data.length < parseInt(input.quantity)){
-    input.warning = `There are only ${data.length} engines available. Do you want to proceed?`
-  }
-  console.log(data);
 
   if (!availableInventoryQueryResult) {
     throw new Error("Check Engine Availability Failed:(");
   }
 
-  const displacementList = Array<number>();
-  const powerList = Array<number>();
-  const applicationList = Array<string>();
-  for (let i = 0; i < availableInventory.length; i++) {
-    if (
-      !displacementList.includes(availableInventory[i].displacement) &&
-      !powerList.includes(availableInventory[i].power) &&
-      !applicationList.includes(availableInventory[i].application)
-    ) {
-      displacementList.push(availableInventory[i].displacement);
-      powerList.push(availableInventory[i].power);
-      applicationList.push(availableInventory[i].application);
-    }
+  let displacementList = Array<number>();
+  let powerList = Array<number>();
+  let applicationList = Array<string>();
+  displacementList = availableInventory
+    .map((item) => item.displacement)
+    .filter((value, index, array) => array.indexOf(value) === index);
+  powerList = availableInventory
+    .map((item) => item.power)
+    .filter((value, index, array) => array.indexOf(value) === index);
+  applicationList = availableInventory
+    .map((item) => item.application)
+    .filter((value, index, array) => array.indexOf(value) === index);
+  let data: Array<any> = availableInventoryQueryResult.finalOrder || [];
+  const input: any = availableInventoryQueryResult.userInput || {};
+  data = data.filter((item) => item !== null);
+  if (data.length < parseInt(input.quantity)) {
+    input.warning = `There are only ${data.length} engines available. Do you want to proceed?`;
   }
   return (
     <div className="p-4">
@@ -258,12 +248,18 @@ export default function Order() {
           </ul>
           <div>
             <p className="p-3">
-              State: {input.state} &nbsp;
-              Quantity: {input.quantity} &nbsp;
-              Application: {input.application} &nbsp;
-              Dispacement: {input.displacement} &nbsp;
-              Power: {input.power}
-              { input.warning ? <p className="text-red-600 font-extrabold">Warning: {input.warning}</p> : <p className="text-green-500 font-extrabold">Engines are available</p>}
+              State: {input.state} &nbsp; Quantity: {input.quantity} &nbsp;
+              Application: {input.application} &nbsp; Dispacement:{" "}
+              {input.displacement} &nbsp; Power: {input.power}
+              {input.warning ? (
+                <p className="text-red-600 font-extrabold">
+                  Warning: {input.warning}
+                </p>
+              ) : (
+                <p className="text-green-500 font-extrabold">
+                  Engines are available
+                </p>
+              )}
             </p>
           </div>
           <div className="flex items-center justify-center inline-block p-5">
@@ -278,8 +274,8 @@ export default function Order() {
             <p>
               Please reivew the engines' specifications and
               location&#40;State&#41;. <br />
-              The engine&#40;s&#41; are choosen based on
-              logistical proximity to your location. <br />
+              The engine&#40;s&#41; are choosen based on logistical proximity to
+              your location. <br />
               Confirm your order information by RE-ENTERING all information.
             </p>
             <h1 className="font-extrabold p-6">&gt;&gt;</h1>

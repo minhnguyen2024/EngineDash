@@ -16,7 +16,6 @@ export default function Dashboard() {
 
   return (
     <div className="">
-      <h1 className="text-3xl underline font-bold p-6">Dashboard</h1>
       <table className="mb-4 w-full border-b-2 border-b-gray-200 text-left p-6">
         <thead className="bg-gray-200 font-semibold">
           <tr>
