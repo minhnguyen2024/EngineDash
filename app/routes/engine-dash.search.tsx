@@ -56,9 +56,9 @@ export default function EngineSearch() {
   const availableInventory = useLoaderData<typeof loader>();
   const availableInventoryQueryResult = useActionData<typeof action>() || [];
 
-  let displacementList = Array<number>();
-  let powerList = Array<number>();
-  let applicationList = Array<string>();
+  let displacementList: number[];
+  let powerList: number[];
+  let applicationList: string[];
   displacementList = availableInventory
     .map((item) => item.displacement)
     .filter((value, index, array) => array.indexOf(value) === index);
