@@ -69,73 +69,84 @@ export default function EngineSearch() {
     .map((item) => item.application)
     .filter((value, index, array) => array.indexOf(value) === index);
   return (
-    <div>
-      <p> Engine Search</p>
-      <form
-        method="post"
-        className="rounded-md border-2 border-black w-96 ml-6"
-      >
-        <input type="hidden" value="ENGINE_AVAILABILITY_QUERY" name="_action" />
-
-        <li>
-          <label>Choose Engine Specifications</label>
-          <ul>
-            <li>
-              <div className="inline-block ml-8">
-                <label>
-                  Power
+    <div className="p-4">
+      <div className="flex flex-col justify-center items-center">
+        <form
+          method="post"
+          className="rounded-md border-2 border-black ml-6"
+        >
+          <input
+            type="hidden"
+            value="ENGINE_AVAILABILITY_QUERY"
+            name="_action"
+          />
+          <div className="flex items-center justify-center">
+            <label className="font-semibold">Choose Engine Specifications</label>
+          </div>
+            <ul className="flex p-4">
+              <li>
+                <div className="inline-block ml-8">
+                  <label >
+                    Power
+                    <select
+                      name="power"
+                      id="power"
+                      className=" rounded-md border-2 border-black ml-3"
+                    >
+                      {powerList.map((power) => (
+                        <option key={power} value={power}>
+                          {power} HP
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              </li>
+              <li>
+                <div className="inline-block ml-8">
+                  <label>
+                    Applications
+                    <select
+                      name="application"
+                      id="application"
+                      className=" rounded-md border-2 border-black ml-3"
+                    >
+                      {applicationList.map((app) => (
+                        <option key={app} value={app}>
+                          {app}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              </li>
+              <li>
+                <div className="inline-block ml-8">
+                  <label className="mr-3">Displacement</label>
                   <select
-                    name="power"
-                    id="power"
+                    name="displacement"
+                    id="displacement"
                     className=" rounded-md border-2 border-black"
                   >
-                    {powerList.map((power) => (
-                      <option key={power} value={power}>
-                        {power} HP
+                    {displacementList.map((dis) => (
+                      <option key={dis} value={dis}>
+                        {dis}
                       </option>
                     ))}
                   </select>
-                </label>
-              </div>
-            </li>
-            <li>
-              <div className="inline-block ml-8">
-                <label>
-                  Applications
-                  <select
-                    name="application"
-                    id="application"
-                    className=" rounded-md border-2 border-black"
-                  >
-                    {applicationList.map((app) => (
-                      <option key={app} value={app}>
-                        {app}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-            </li>
-            <li>
-              <div className="inline-block ml-8">
-                <label>Displacement</label>
-                <select
-                  name="displacement"
-                  id="displacement"
-                  className=" rounded-md border-2 border-black"
-                >
-                  {displacementList.map((dis) => (
-                    <option key={dis} value={dis}>
-                      {dis}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </li>
-          </ul>
-        </li>
-        <button>Search For Engine</button>
-      </form>
+                </div>
+              </li>
+            </ul>
+          <div className="flex items-center justify-center inline-block pb-3">
+            <button
+              type="submit"
+              className="rounded-md border-2 border-black px-4 py-2 bg-blue-500"
+            >
+              Search For Engine
+            </button>
+          </div>
+        </form>
+      </div>
       <div>
         {availableInventory.length !== 0 ? (
           <table className="mb-4 w-full border-b-2 border-b-gray-200 text-left p-6">
@@ -152,11 +163,11 @@ export default function EngineSearch() {
               {availableInventoryQueryResult.map((engine: any) => {
                 return (
                   <tr key={engine.id}>
-                    <td className="py-2 pl-16 ">{engine.name}</td>
+                    <td className="py-2 pl-16 ">{engine.engineName}</td>
                     <td className="py-2 ">{engine.displacement}</td>
                     <td className="py-2 ">{engine.application}</td>
                     <td className="py-2 ">{engine.power}</td>
-                    <td className="py-2 pl-16 ">{engine.state.name}</td>
+                    <td className="py-2 pl-16 ">{engine.state.stateName}</td>
                   </tr>
                 );
               })}

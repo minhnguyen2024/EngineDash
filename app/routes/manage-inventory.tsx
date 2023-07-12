@@ -52,7 +52,7 @@ export async function action({ request }: ActionArgs) {
       },
     });
   }
-  return redirect("/dashboard");
+  return redirect("/");
 }
 export default function ManageInventory() {
   return (

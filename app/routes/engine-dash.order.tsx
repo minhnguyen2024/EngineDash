@@ -49,7 +49,7 @@ export async function action({ request }: ActionArgs) {
       uuidList.push(element.uuid);
     }
     confirmOrderEngine(uuidList);
-    return redirect("/dashboard");
+    return redirect("/");
   }
 }
 

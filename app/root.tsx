@@ -38,7 +38,7 @@ export default function App() {
         <nav className=" bg-red-600 text-white font-semibold">
           <ul className="p-6">
             <li className="inline-block mr-4 hover:underline">
-                <Link to="dashboard" className={location.pathname === '/dashboard' ? 'underline font-extrabold' : ''}>Dashboard</Link>
+                <Link to="/" className={location.pathname === '/' ? 'underline font-extrabold' : ''}>Dashboard</Link>
             </li>
             <li className="inline-block mr-4 hover:underline">
                 <Link to="engine-dash/order" className={location.pathname === '/engine-dash/order' ? 'underline font-extrabold' : ''}>Order Engines</Link>
