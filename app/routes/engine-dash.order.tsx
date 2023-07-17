@@ -7,25 +7,14 @@
 //TODO:
 //TODO:
 import { US_AVAILABLE_STATE, US_DISTANCE_ARRAY } from "~/utils/helper-data";
+import { bubbleSort } from "~/utils/helper-functions";
 import { useActionData, useLoaderData } from "@remix-run/react";
 import { type LoaderArgs, type ActionArgs, redirect } from "@remix-run/node";
 import { db } from "~/utils/db.server";
 import { dijkstra, printInfo } from "~/utils/engine-dash-algo";
 
-function bubbleSort(arr: Array<number>) {
-  for (var i = 0; i < arr.length; i++) {
-    for (var j = 0; j < arr.length - i - 1; j++) {
-      if (arr[j] > arr[j + 1]) {
-        var temp = arr[j];
-        arr[j] = arr[j + 1];
-        arr[j + 1] = temp;
-      }
-    }
-  }
-  return arr;
-}
-
 export async function loader({ request }: LoaderArgs) {
+  console.log("loader")
   const availableInventory = await db.engine.findMany({
     select: {
       displacement: true,
@@ -111,7 +100,6 @@ async function queryEngineAvailabilityUsingDijkstra(formData: FormData) {
 }
 
 async function confirmOrderEngine(uuidList: Array<string>) {
-  console.log(uuidList);
   for (const element of uuidList) {
     await db.$queryRaw`DELETE FROM engine WHERE uuid = ${element}`;
   }
